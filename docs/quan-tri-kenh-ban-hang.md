@@ -2,7 +2,7 @@
 
 Quy trình này chuẩn bị số liệu cho phần **Di động → Quản trị kênh bán hàng** của báo cáo kết quả kinh doanh tuần. `HQ` tổng hợp hiệu quả theo điểm bán, kênh và đơn vị. `BSC` dùng kết quả đó cùng số liệu cộng tác viên và kế hoạch để chấm điểm.
 
-Tài liệu ghi lại quy trình vận hành và đặc tả tính toán từ workbook mẫu tuần 46. Chưa có chương trình tự động tải dữ liệu hoặc tính báo cáo.
+Tài liệu ghi lại quy trình vận hành và đặc tả tính toán từ workbook mẫu tuần 46. [Tool tính HQ](../scripts/tinh_hq.py) xử lý các tệp đã xuất cho VinaPro và VinaKey1. Các bước tải từ hệ thống và tính BSC nằm ngoài phạm vi của bản thử.
 
 ## 1. Nguồn dữ liệu và cách lấy
 

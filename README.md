@@ -26,4 +26,19 @@ Dự án tự động hóa việc tải dữ liệu từ cổng nội bộ của
 - Ánh xạ từng nguồn vào workbook tính toán và cách cập nhật dữ liệu cũ khi chạy lại cùng kỳ.
 - Cách tính lại công thức, kiểm tra kết quả và nơi lưu đầu ra.
 
-Repo hiện ở giai đoạn mô tả quy trình. Dữ liệu nội bộ, workbook chứa dữ liệu thật và thông tin đăng nhập được lưu ngoài Git.
+Dữ liệu nội bộ, workbook chứa dữ liệu thật và thông tin đăng nhập được lưu ngoài Git.
+
+## Chạy thử HQ
+
+Tool tính HQ cho VinaPro và VinaKey1 từ tệp IMS73 và BRIS đã xuất. Chuẩn bị danh mục SMCS dạng Excel với các cột `Mã điểm bán`, `Số eLoad`, `Loại kênh`, `Đối tượng`, `Mã HRM` và `Mã đơn vị`. Bổ sung HRM của VinaPro và mã đơn vị quản lý từ danh mục nhân viên hoặc đơn vị nếu tệp SMCS thiếu các trường này. Có thể chỉ định sheet danh mục bằng `--smcs-sheet`.
+
+```powershell
+python -m pip install -r requirements.txt
+python scripts/tinh_hq.py --ims local/RPVNP0173.xls --bris local/bris.xlsx --smcs local/smcs.xlsx --bris-from 2026-11-01 --bris-to 2026-11-03 --output local/hq
+```
+
+Lệnh dùng toàn bộ tệp doanh thu IMS theo kỳ đã xuất. Hai tham số ngày ở ví dụ lọc ngày kích hoạt BRIS. Để tính tái sử dụng, truyền thêm `--td49` cho workbook có sheet `ALL_TD49` và `--sim-tsd` cho workbook có sheet `Sim TSD`. Khi thiếu nguồn tái sử dụng của kênh, cột `reuse_revenue` để trống và doanh thu HQ của kênh chỉ gồm PTM.
+
+Kết quả gồm `hq.csv` theo đơn vị và kênh, `points.csv` theo điểm, `exceptions.csv` theo dòng nguồn và `run.json` mô tả phạm vi chạy. Dùng `--compare` với workbook tuần 46 để xuất thêm bảng chênh lệch. Nếu thiếu danh mục SMCS trong bộ thử tuần 46, `--week46-catalog` dùng danh mục điểm từ workbook mẫu thay cho `--smcs`. Tham số `--diagnose-reference-bris` tạo một phép đối chiếu riêng dùng khóa BRIS đã lưu trong workbook mẫu. Kết quả chính vẫn dùng BRIS thô.
+
+Xem [quy trình quản trị kênh bán hàng](docs/quan-tri-kenh-ban-hang.md) để biết nguồn dữ liệu, công thức và các điểm cần chốt.
