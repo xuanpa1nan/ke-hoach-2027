@@ -42,3 +42,15 @@ Lệnh dùng toàn bộ tệp doanh thu IMS theo kỳ đã xuất. Hai tham số
 Kết quả gồm `hq.csv` theo đơn vị và kênh, `points.csv` theo điểm, `exceptions.csv` theo dòng nguồn và `run.json` mô tả phạm vi chạy. Dùng `--compare` với workbook tuần 46 để xuất thêm bảng chênh lệch. Nếu thiếu danh mục SMCS trong bộ thử tuần 46, `--week46-catalog` dùng danh mục điểm từ workbook mẫu thay cho `--smcs`. Tham số `--diagnose-reference-bris` tạo một phép đối chiếu riêng dùng khóa BRIS đã lưu trong workbook mẫu. Kết quả chính vẫn dùng BRIS thô.
 
 Xem [quy trình quản trị kênh bán hàng](docs/quan-tri-kenh-ban-hang.md) để biết nguồn dữ liệu, công thức và các điểm cần chốt.
+
+## Xuất bộ báo cáo thử
+
+Sau khi chạy HQ, chuẩn bị dữ liệu cho ba đầu ra và xuất Excel/Word. Bộ thử lấy danh mục CTV, nhân viên và kế hoạch BSC từ workbook tuần 46. Mẫu Excel tuần 47 cung cấp tên sheet và tiêu đề. Các chỉ tiêu ngoài phạm vi tính được đánh dấu thiếu trong báo cáo.
+
+```powershell
+python scripts/du_lieu_bao_cao_tuan.py --hq-dir local/hq --reference local/mau-tuan46.xlsx --ims local/RPVNP0173.xls --excel-template local/mau-bao-cao.xlsx --week 46 --output local/du-lieu-bao-cao.json
+node scripts/xuat_bao_cao_tuan.mjs local/du-lieu-bao-cao.json local/bao-cao-tuan46
+& ./scripts/dat-kho-in.ps1 "local/bao-cao-tuan46/HQ và BSC - Tuần 46.xlsx" "local/bao-cao-tuan46/BC SXKD - Tuần 46.xlsx"
+```
+
+Bước xuất dùng Node.js với `@oai/artifact-tool` và `docx`. Trong môi trường Codex, đặt `REPORT_NODE_MODULES` thành đường dẫn thư mục thư viện Node.js do trình nạp phụ thuộc cung cấp. Chạy bước cuối trong PowerShell 7 với Microsoft Excel trên Windows để đặt các sheet `In doanh thu`, `In sản lượng` và `In BSC` ở khổ A4 ngang, mỗi sheet vừa một trang.
