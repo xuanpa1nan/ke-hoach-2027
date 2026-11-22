@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="vi">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quản trị kênh bán hàng</title>
+<style>
+:root{color-scheme:light;--ink:#132834;--sub:#48636b;--canvas:#edf4f2;--paper:#fff;--rule:#d5e3df;--green:#176358}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);background:var(--canvas);font:15px/1.5 "Segoe UI",system-ui,sans-serif}
+[hidden]{display:none!important}.app{display:grid;grid-template-columns:225px minmax(0,1fr);min-height:100vh}
+aside{background:#122b31;color:#d5e7e2;padding:28px 16px}.brand{font-size:19px;color:white;font-weight:650;padding:0 9px}
+.brand small{display:block;color:#aac5c0;font-size:13px;font-weight:400;margin-top:3px}nav{display:grid;gap:6px;margin-top:32px}
+button,select,input{font:inherit}button{cursor:pointer;border:0;border-radius:8px;min-height:40px;padding:8px 13px}
+nav button{color:inherit;background:transparent;text-align:left}nav button[aria-pressed=true]{background:#28514e;color:white}
+button.primary{background:var(--green);color:#fff}button.secondary{background:#e0efe9;color:#19594f}
+button:disabled{cursor:wait;opacity:.65}main{min-width:0}.top{padding:16px 28px;background:white;border-bottom:1px solid var(--rule);color:var(--sub)}
+.content{max-width:1200px;padding:28px;margin:auto}h1{font-size:30px;letter-spacing:-.035em;line-height:1.15;margin:0}h2{font-size:17px;margin:0 0 10px}
+p{margin:7px 0 0;color:var(--sub)}.heading,.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}.heading{margin-bottom:21px}
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:12px;padding:18px;margin-bottom:15px}
+.row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.files{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+label{display:grid;gap:5px}input,select{width:100%;padding:8px;color:var(--ink);border:1px solid #bccfc9;border-radius:7px;background:white}
+input[type=file]{min-width:0}summary{cursor:pointer;color:#19594f}details .files{margin-top:12px}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.metric span{display:block;color:var(--sub)}.metric strong{display:block;font-size:25px;margin-top:5px;font-variant-numeric:tabular-nums}
+.scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}th,td{padding:10px;border-bottom:1px solid var(--rule);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}thead{background:#eaf3f0}tbody tr:last-child{font-weight:650}
+.tabs,.exports{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:12px}.tabs button[aria-pressed=true]{background:#dcefe7;color:#174b43}
+.exports a{background:#e0efe9;color:#144f45;border-radius:8px;padding:9px 12px}
+.message{min-height:26px;margin:0 0 10px;color:#19594f}.message.error{color:#a22a21}
+li+li{margin-top:6px}ul{padding-left:20px;margin-bottom:0}code{overflow-wrap:anywhere}
+@media(max-width:820px){.app{grid-template-columns:1fr}aside{padding:13px}nav{display:flex;flex-wrap:wrap;margin-top:12px}.content,.top{padding:16px}}
+@media(max-width:560px){.files,.row,.metrics{grid-template-columns:1fr}}
+</style>
+<div class="app">
+  <aside><div class="brand">Quản trị kênh<small>Báo cáo di động</small></div>
+    <nav aria-label="Màn hình">
+      <button type="button" data-view="source" aria-pressed="true">Dữ liệu nguồn</button>
+      <button type="button" data-view="results" aria-pressed="false">Kết quả HQ/BSC</button>
+      <button type="button" data-view="export" aria-pressed="false">Báo cáo tuần</button>
+    </nav>
+  </aside>
+  <main>
+    <header class="top">Di động / Quản trị kênh bán hàng</header>
+    <div class="content">
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+      <section data-panel="source">
+        <div class="heading"><div><h1>Dữ liệu nguồn</h1><p>Chọn tệp Excel và kỳ báo cáo. Các tệp được xử lý trên máy này.</p></div></div>
+        <form id="run-form">
+          <div class="card row">
+            <label>Tuần báo cáo<input type="number" name="week" value="46" min="1" max="53" required></label>
+            <label>BRIS từ ngày<input type="date" name="bris_from" value="2026-11-01" required></label>
+            <label>BRIS đến ngày<input type="date" name="bris_to" value="2026-11-03" required></label>
+          </div>
+          <div class="card">
+            <h2>Tệp đầu vào</h2>
+            <div class="files">
+              <label>IMS73 · Doanh thu<input type="file" name="ims" accept=".xls,.xlsx"></label>
+              <label>BRIS · Sản lượng<input type="file" name="bris" accept=".xlsx,.xls"></label>
+              <label>SMCS · Danh mục điểm bán<input type="file" name="smcs" accept=".xlsx,.xls"></label>
+              <label>Workbook tham chiếu BSC đúng kỳ<input type="file" name="reference" accept=".xlsx"></label>
+              <label>Mẫu báo cáo tuần Excel<input type="file" name="template" accept=".xlsx"></label>
+            </div>
+          </div>
+          <details class="card"><summary>Tệp bổ sung doanh thu tái sử dụng</summary>
+            <div class="files"><label>Workbook có sheet ALL_TD49<input type="file" name="td49" accept=".xlsx"></label>
+              <label>Workbook có sheet Sim TSD<input type="file" name="sim_tsd" accept=".xlsx"></label></div>
+          </details>
+          <div class="actions">
+            <button class="primary" type="submit">Chạy tính HQ/BSC</button>
+            <button class="secondary" type="button" id="demo" hidden>Chạy bộ mẫu tuần 46</button>
+          </div>
+        </form>
+      </section>
+      <section data-panel="results" hidden>
+        <div class="heading"><div><h1>Hiệu quả kênh bán hàng</h1><p id="period"></p></div>
+          <button class="primary" type="button" data-go="export">Mở xuất báo cáo</button></div>
+        <p id="no-result">Chọn dữ liệu nguồn và chạy tính để xem kết quả.</p>
+        <div id="result" hidden>
+          <div class="metrics">
+            <div class="card metric"><span>Doanh thu đánh giá</span><strong id="revenue"></strong></div>
+            <div class="card metric"><span>Thuê bao PTM</span><strong id="production"></strong></div>
+            <div class="card metric"><span>Điểm có PSSL</span><strong id="active"></strong></div>
+          </div>
+          <div class="card">
+            <div class="tabs" aria-label="Bảng kết quả">
+              <button type="button" data-table="hq" aria-pressed="true">HQ theo đơn vị</button>
+              <button type="button" data-table="bsc" aria-pressed="false">Điểm BSC</button>
+            </div>
+            <div id="table" class="scroll"></div>
+          </div>
+          <details class="card"><summary>Nguồn tham chiếu và chỉ tiêu còn thiếu</summary><ul id="notes"></ul></details>
+        </div>
+      </section>
+      <section data-panel="export" hidden>
+        <div class="heading"><div><h1>Báo cáo tuần</h1><p>Xuất hai báo cáo tuần và workbook HQ/BSC vào thư mục local.</p></div></div>
+        <button id="export-button" class="primary" type="button" disabled>Xuất báo cáo</button>
+        <div class="card" id="download" hidden style="margin-top:15px">
+          <h2>Tệp đã xuất</h2><div class="exports" id="links"></div><p><code id="folder"></code></p>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+<script>
+const token = "__LOCAL_TOKEN__";
+const demoAvailable = __DEMO_AVAILABLE__;
+const get = id => document.getElementById(id);
+const form = get("run-form");
+const number = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 });
+let result = null;
+let selectedTable = "hq";
+let busy = false;
+function view(name) {
+  document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === name)));
+  document.querySelectorAll("[data-panel]").forEach(p => { p.hidden = p.dataset.panel !== name; });
+}
+function message(text, error = false) {
+  get("message").textContent = text;
+  get("message").classList.toggle("error", error);
+}
+async function post(path, body, headers = {}) {
+  const response = await fetch(path, { method: "POST", headers: { "X-Local-Token": token, ...headers }, body });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error);
+  return data;
+}
+function renderTable() {
+  const table = document.createElement("table");
+  const hq = selectedTable === "hq";
+  const titles = hq
+    ? ["Đơn vị", "DT PTM (triệu đ)", "DT đánh giá PRO", "DT đánh giá KEY1", "Điểm PSSL", "Thuê bao PTM"]
+    : ["Đơn vị", "Điểm I.8.1", "Điểm I.8.2", "Điểm I.8.3", "BSC chung"];
+  const head = table.createTHead().insertRow();
+  for (const title of titles) {
+    const th = document.createElement("th");
+    th.scope = "col";
+    th.textContent = title;
+    head.append(th);
+  }
+  const body = table.createTBody();
+  for (const r of result[selectedTable]) {
+    const row = body.insertRow();
+    const cells = hq ? [r[0], r[1]/1e6, r[6]/1e6, r[12]/1e6, r[7]+r[13], r[3]]
+                     : [r[0], r[5], r[10], r[14], r[15]];
+    for (const value of cells) row.insertCell().textContent = typeof value === "number" ? number.format(value) : value;
+  }
+  get("table").replaceChildren(table);
+}
+async function run(demo) {
+  if (busy || (!demo && !form.reportValidity())) return;
+  if (!demo) {
+    const labels = {ims:"IMS73",bris:"BRIS",smcs:"SMCS",reference:"workbook BSC",template:"mẫu Excel"};
+    const absent = Object.keys(labels).filter(name => !form.elements[name].files.length);
+    if (absent.length) return message("Chọn thêm: " + absent.map(name => labels[name]).join(", "), true);
+  }
+  const body = demo ? new FormData() : new FormData(form);
+  if (demo) for (const [name,value] of Object.entries({week:"46",bris_from:"2026-11-01",bris_to:"2026-11-03",demo:"true"})) body.set(name,value);
+  busy = true;
+  form.querySelectorAll("button").forEach(b => {b.disabled = true;});
+  get("export-button").disabled = true;
+  message("Đang đọc tệp và tính HQ/BSC…");
+  try {
+    result = await post("/run", body);
+    const total = result.hq.at(-1);
+    get("period").textContent = "Tuần " + result.week + " · Toàn tỉnh";
+    get("revenue").textContent = number.format((total[6]+total[12])/1e6) + " triệu đ";
+    get("production").textContent = number.format(total[3]);
+    get("active").textContent = number.format(total[7]+total[13]) + " / " + number.format(total[4]+total[10]);
+    get("notes").replaceChildren(...result.notes.map(([name, text]) => {
+      const li = document.createElement("li");
+      li.textContent = name + " — " + text;
+      return li;
+    }));
+    get("no-result").hidden = true;
+    get("result").hidden = false;
+    get("download").hidden = true;
+    renderTable();
+    view("results");
+    message(demo ? "Đã tính từ bộ mẫu tuần 46. Danh mục điểm dùng workbook tham chiếu." : "Đã tính HQ/BSC.");
+  } catch (error) { message(error.message, true); }
+  finally {
+    busy = false;
+    form.querySelectorAll("button").forEach(b => {b.disabled = false;});
+    get("export-button").disabled = !result;
+  }
+}
+document.querySelectorAll("[data-view],[data-go]").forEach(b => b.onclick = () => view(b.dataset.view || b.dataset.go));
+document.querySelectorAll("[data-table]").forEach(b => b.onclick = () => {
+  selectedTable = b.dataset.table;
+  document.querySelectorAll("[data-table]").forEach(t => t.setAttribute("aria-pressed", String(t === b)));
+  renderTable();
+});
+form.onsubmit = event => {event.preventDefault(); run(false);};
+get("demo").hidden = !demoAvailable;
+get("demo").onclick = () => run(true);
+get("export-button").onclick = async () => {
+  if (!result || busy) return;
+  const button = get("export-button");
+  button.disabled = true;
+  busy = true;
+  message("Đang xuất tệp Excel và Word…");
+  try {
+    const data = await post("/export", JSON.stringify({run:result.run}), {"Content-Type":"application/json"});
+    const labels = {hq:"HQ và BSC (.xlsx)", excel:"Báo cáo SXKD (.xlsx)", word:"Báo cáo điều hành (.docx)"};
+    get("links").replaceChildren(...Object.entries(data.files).map(([id, url]) => {
+      const link = document.createElement("a");
+      link.href = url;
+      link.textContent = labels[id];
+      return link;
+    }));
+    get("folder").textContent = data.folder;
+    get("download").hidden = false;
+    message("Đã lưu ba tệp trên máy.");
+  } catch (error) { message(error.message, true); }
+  finally {busy = false; button.disabled = false;}
+};
+</script>
+</html>

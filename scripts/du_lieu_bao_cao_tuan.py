@@ -35,7 +35,9 @@ def report(hq_dir, reference, template, ims):
     meta = json.loads((hq_dir / "run.json").read_text(encoding="utf-8"))
     bsc = list(workbook_rows(reference, "BSC"))
     reference_hq = list(workbook_rows(reference, "HQ"))
-    units = [key(r[0]) for r in reference_hq[4:22]] + ["TOTAL"]
+    units = [key(r[0]) for r in reference_hq[4:22] if key(r[0])]
+    units += sorted({unit for unit, _ in hq} - set(units) - {"TOTAL"})
+    units.append("TOTAL")
     missing = [
         ["SMCS", "Danh mục điểm dùng bản tuần 46 trích từ workbook. Chưa có tệp SMCS xuất trực tiếp."],
         ["CTV / BSC I.8.1", "Tính lại từ các bảng CTV XHH, All_CTV XHH và danh sách nhân viên lưu trong workbook tuần 46."],
@@ -46,6 +48,8 @@ def report(hq_dir, reference, template, ims):
         ["Đối soát TD49", "Tính VinaPro trên toàn bộ tệp IMS. Bản mẫu tuần 46 chỉ có công thức tra TD49 đến dòng 5091."],
         ["Tái sử dụng VinaKey1", "Sheet Sim TSD của tuần 46 chưa có dòng đủ khóa và giá gói để kiểm chứng doanh thu tái sử dụng."],
         ["BRIS", f"Lọc theo ngày kích hoạt từ {meta.get('bris_from')} đến {meta.get('bris_to')}. Dùng khóa BRIS thô."],
+        ["CTKD", "Doanh thu VinaPro/VinaKey1 tính từ IMS. Kế hoạch, điểm đạt chuẩn và các chỉ tiêu CTKD khác lấy số lưu trong sheet TH tuần 46."],
+        ["Chiến dịch 120 ngày", "Tệp mang tên tuần 46 có doanh thu tuần trùng bản tuần 47 tại 19 đơn vị sau làm tròn. Cần xác nhận kỳ trước khi điền."],
     ]
     ctv_orders = Counter(key(r[13]) for r in list(workbook_rows(reference, "CTV XHH"))[1:] if key(r[13]))
     managed = defaultdict(set)
@@ -62,6 +66,13 @@ def report(hq_dir, reference, template, ims):
     plans = {key(row[0]): (numeric(row[4]), numeric(row[10]), numeric(row[13]))
              for row in bsc[3:21] if key(row[0])}
     plans["TOTAL"] = tuple(numeric(bsc[21][i]) for i in (4, 10, 13))
+    # Mỗi cột đích D:M, N, R:Y giữ định nghĩa từ nhóm CTKD tương ứng trong TH.
+    th_columns = dict(zip(range(3, 13), range(8, 19)))
+    th_columns.update({7: 13, 8: 14, 9: 15, 10: 16, 11: 17, 12: 18})
+    th_columns.update(dict(zip((13, *range(17, 25)), (20, *range(24, 32)))))
+    th_rows = list(workbook_rows(reference, "TH"))
+    th_by_unit = {key(row[1]): row for row in th_rows[5:24] if key(row[1])}
+    th_by_unit["TOTAL"] = th_rows[24]
     transaction_ptm = defaultdict(float)
     ims_columns = {"unit": {"DONVI"}, "channel": {"DOITUONG"},
                    "kind": {"LOAITB"}, "amount": {"GIAGOI"}}
@@ -103,8 +114,9 @@ def report(hq_dir, reference, template, ims):
         # KHG BSC doanh thu có phần tái sử dụng, nên giữ riêng khỏi PTM của CT2.1.
         pro_transaction = transaction_ptm[unit, "VINAPRO"]
         vk_transaction = transaction_ptm[unit, "VINAKEY1"]
-        program.append([label, pro_transaction, vk_transaction, pro_transaction+vk_transaction, pro[3], vk[3],
-                        display(plan3), revenue, display(f3), "Thiếu kế hoạch CT2.1"])
+        th = th_by_unit.get(unit)
+        cached = {column: numeric(th[source]) for column, source in th_columns.items()} if th else {}
+        program.append([label, pro_transaction, vk_transaction, pro_transaction+vk_transaction, cached])
 
     template_tabs = []
     from openpyxl import load_workbook

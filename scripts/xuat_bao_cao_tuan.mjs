@@ -72,13 +72,20 @@ function weeklyHQ(row, index) {
 }
 
 function weeklyProgram(row, index) {
-  const [unit, pro, vk, sum] = row;
+  const [unit, pro, vk, sum, cached] = row;
   const cells = Array(43).fill(missing);
   cells[0] = unit === 'Toàn tỉnh' ? null : index + 1;
   cells[1] = unit;
+  for (const [column, value] of Object.entries(cached)) cells[Number(column)] = value ?? missing;
   cells[14] = pro / 1_000_000;
   cells[15] = vk / 1_000_000;
   cells[16] = sum / 1_000_000;
+  const completion = typeof cells[13] === 'number' ? ratio(cells[16], cells[13]) : null;
+  cells[17] = completion ?? missing;
+  cells[23] = completion !== null && typeof cells[22] === 'number'
+    ? 0.7 * completion + 0.3 * cells[22] : missing;
+  cells[24] = missing;
+  for (let i = 25; i <= 32; i++) cells[i] = 'Bổ sung sau';
   return cells;
 }
 
@@ -149,7 +156,11 @@ for (const name of data.template_tabs) {
     headers[4][14] = 'VINAPRO (triệu đ)';
     headers[4][15] = 'VINAKEY1 (triệu đ)';
     headers[4][16] = 'Tổng (triệu đ)';
-    sheet(weekly, name, headers, data.program.map(weeklyProgram));
+    sheet(weekly, name, headers, data.program.map(weeklyProgram),
+      { percent: [5, 9, 17, 22, 23], integer: [0, 6, 10, 11, 19, 20, 21] });
+  } else if (name === 'KQ TH di động 120 ngày.') {
+    const status = data.demo === false ? missing : 'Cần xác nhận kỳ của tệp chiến dịch';
+    sheet(weekly, name, [['Trạng thái']], [[status]], { widths: [380] });
   } else {
     sheet(weekly, name, [['Trạng thái']], [[missing]], { widths: [180] });
   }
@@ -171,7 +182,9 @@ const children = [
   h('Hiệu quả kênh ngoài', HeadingLevel.HEADING_3),
   p(`Doanh thu PTM theo đơn vị giao dịch IMS đạt ${million(data.program.at(-1)[3])} triệu đồng. Doanh thu đánh giá theo đơn vị quản lý điểm đạt ${million(total[6] + total[12])} triệu đồng, trong đó VinaPro ${million(total[6])} triệu đồng và VinaKey1 ${million(total[12])} triệu đồng.`),
   p(`Sản lượng PTM đạt ${format.format(total[3])} thuê bao, gồm VinaPro ${format.format(total[8])} và VinaKey1 ${format.format(total[14])}. Số điểm có phát sinh sản lượng lần lượt là ${format.format(total[7])}/${format.format(total[4])} và ${format.format(total[13])}/${format.format(total[10])}.`),
-  p(`Doanh thu tái sử dụng ghi nhận được là ${million(total[2])} triệu đồng. Số liệu VinaPro đã tra TD49 trên toàn bộ tệp IMS. Nguồn tái sử dụng VinaKey1 chưa đủ để kiểm chứng.`),
+  p(data.demo === false
+    ? `Doanh thu tái sử dụng ghi nhận được là ${million(total[2])} triệu đồng. Xem nguồn bổ sung trong workbook HQ/BSC.`
+    : `Doanh thu tái sử dụng ghi nhận được là ${million(total[2])} triệu đồng. Số liệu VinaPro đã tra TD49 trên toàn bộ tệp IMS. Nguồn tái sử dụng VinaKey1 chưa đủ để kiểm chứng.`),
   p('Thiếu dữ liệu để nhận định điều kiện chi lương, tiến độ kế hoạch CT2.1 và chênh lệch so với tuần trước. VinaKey2 và CTV liên kết sẽ bổ sung sau.'),
   p('Thiếu dữ liệu cho chiến dịch 120 ngày, BRCĐ, MyTV và các chỉ tiêu di động khác.'),
   h('II. Dịch vụ công nghệ thông tin'),

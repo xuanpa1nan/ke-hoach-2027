@@ -54,3 +54,11 @@ node scripts/xuat_bao_cao_tuan.mjs local/du-lieu-bao-cao.json local/bao-cao-tuan
 ```
 
 Bước xuất dùng Node.js với `@oai/artifact-tool` và `docx`. Trong môi trường Codex, đặt `REPORT_NODE_MODULES` thành đường dẫn thư mục thư viện Node.js do trình nạp phụ thuộc cung cấp. Chạy bước cuối trong PowerShell 7 với Microsoft Excel trên Windows để đặt các sheet `In doanh thu`, `In sản lượng` và `In BSC` ở khổ A4 ngang, mỗi sheet vừa một trang.
+
+## Chạy giao diện trên máy
+
+Sau khi cài thư viện Python và thiết lập Node.js như trên, chạy `python scripts/giao_dien_hq.py` rồi mở `http://127.0.0.1:8765`. Nếu Node.js chưa có trên PATH, thêm `--node <đường dẫn node.exe>`.
+
+Chọn IMS73, BRIS và danh mục SMCS. Để tính BSC, chọn thêm workbook tham chiếu đúng kỳ có bố cục `HQ`, `BSC`, `TH` và các bảng CTV giống mẫu. Chọn mẫu Excel tuần để xuất báo cáo. Các kết quả được tách theo lần chạy trong `local/giao-dien-hq/`.
+
+Để hiện nút chạy bộ mẫu tuần 46, truyền `--demo-dir <thư mục dữ liệu>`, `--demo-reference <workbook tuần 46>` và `--demo-template <mẫu Excel tuần>`. Chế độ này dùng danh mục điểm trong workbook mẫu khi chưa có file SMCS.
